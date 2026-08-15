@@ -7,3 +7,5 @@ docker run -d \
   webvariable:v1
 # You can write the same command in one line:-
 docker run -d -p 5000:5000 --name flask-app -e APP_NAME="Neonj DevOps" -e APP_ENV="Production" webvariable:v1
+# If you have to pass the collection of enviourment variables file '.env' through command prompt:- 
+docker run -d --name flask-app --env-file .env -p 5000:5000 webvariable:v1
