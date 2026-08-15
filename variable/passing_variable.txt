@@ -1,0 +1,9 @@
+# How to pass the Enviourment variables through command line 
+docker run -d \
+  -p 5000:5000 \
+  --name flask-app \
+  -e APP_NAME="Neonj DevOps" \
+  -e APP_ENV="Production" \
+  webvariable:v1
+# You can write the same command in one line:-
+docker run -d -p 5000:5000 --name flask-app -e APP_NAME="Neonj DevOps" -e APP_ENV="Production" webvariable:v1
