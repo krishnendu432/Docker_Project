@@ -1,0 +1,4 @@
+docker run -it \
+  --name ubuntu-volume \
+  -v mysql-data:/data \
+  ubuntu bash
