@@ -2,3 +2,12 @@ docker run -it \
   --name ubuntu-volume \
   -v mysql-data:/data \
   ubuntu bash
+
+# The container will run in backend. 
+docker run -d \
+
+--name ubuntu-volume \
+
+-v mysql-data:/data \
+
+ubuntu sleep infinity
