@@ -1,0 +1,39 @@
+# This file is created to understand the Docker Network commands and topics:-
+# How to check the listed docker network
+docker network ls
+
+# How to create a new docker network?
+
+docker network create <Network_name>
+
+# Syntax of create a container and add with a docker network group
+
+docker run -dit --name <container_name> --network <network_group> <docker_image> <docker_image_name>
+
+# The command is to create a container with the image Ubuntu attached with a network name 'my_network'
+
+docker run -dit --name container1 --network my_network ubuntu:latest webserver1
+
+
+
+# The command is to create a 2nd container with the image Ubuntu attached with a network name 'my_network'
+ 
+docker run -dit --name container1 --network my_network ubuntu:latest webserver1
+
+# Once the containers will create check the list of containers:-
+
+docker ps -a
+
+# How to check the docker network group has been eastablished properly or not:-
+
+step 1-> go to inside any of the docker container, suppose here we are inside the container1.
+syntax:- docker exec -it <Container_ID> bash
+
+step 2-> update the image of the container
+syntax:- sudo apt update
+
+step 3-> Install the ping utils package, to use the ping command.
+syntax:- sudo apt install iputils-ping
+
+step 4-> Start a ping command from container1 to container2 to check the communication between container1 and container2.
+syntax:- ping container2
