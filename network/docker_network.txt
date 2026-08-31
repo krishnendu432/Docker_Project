@@ -37,3 +37,12 @@ syntax:- sudo apt install iputils-ping
 
 step 4-> Start a ping command from container1 to container2 to check the communication between container1 and container2.
 syntax:- ping container2
+
+# How to run a docker container with container name which is running in backend as well as having a volume and connected with a docker network.
+docker run -dit --name container1 \
+  -v mysql-data:/var/lib/mysql \
+  --network mynetwork \
+  -p 80:8080 \
+  mysql
+# above command the name of the container is 'container1', having volume name: 'mysql-data'and mount point is :'/var/lib/mysql', network :-'mynetwork' 
+# and the container port is 80 and the host system port is 8080 and the image is 'mysql'.
