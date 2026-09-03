@@ -1,0 +1,36 @@
+This YAML file is a Docker Compose configuration used to create and run a simple application environment with two containers:
+
+Nginx — acts as the web server.
+MySQL — acts as the database server.
+Docker volume — stores MySQL data persistently.
+Docker Compose
+│
+├── Web Service
+│   └── Nginx container
+│       └── Accessible through localhost:8000
+│
+├── MySQL Service
+│   └── MySQL container
+│       └── Database: dbdb
+│
+└── Persistent Volume
+    └── mysql-data
+        └── Stores MySQL database files
+
+1. Nginx container
+Browser
+   ↓
+localhost:8000
+   ↓
+Nginx container
+   ↓
+Port 80
+
+2. MySQL container
+
+MySQL container
+      ↓
+Database: dbdb
+      ↓
+mysql-data volume
+
