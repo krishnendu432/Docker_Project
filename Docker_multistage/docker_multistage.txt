@@ -1,0 +1,300 @@
+This is a multi-stage Dockerfile for building and running a Go application. The main idea is:
+
+Stage 1: Use Ubuntu + Go to compile the application.
+Stage 2: Use an empty scratch image and copy only the compiled binary into it.
+
+This produces a very small final Docker image.
+
+1. Build stage
+FROM ubuntu AS build
+
+This starts the first stage using the Ubuntu image.
+
+FROM ubuntu → Ubuntu is used as the base image.
+
+AS build → gives this stage the name build.
+
+We will later refer to this stage using --from=build.
+
+Think of this stage as a temporary workshop where we compile the Go application.
+
+2. Install Go
+RUN apt-get update && apt-get install -y golang-go
+
+This executes commands inside the Ubuntu image.
+
+apt-get update
+Downloads the latest package information from Ubuntu's package repositories.
+
+apt-get install -y golang-go
+Installs the Go compiler and related Go tools.
+
+The -y automatically answers yes to the installation prompts.
+
+After this step, the build container has Go available, so commands like:
+
+go build
+
+can be executed.
+
+3. Disable Go modules
+ENV GO111MODULE=off
+
+This sets an environment variable inside the image.
+
+GO111MODULE=off
+
+means Go's module system is disabled.
+
+This is an older Go configuration. Modern Go applications generally use Go modules (go.mod), so in a newer project you would normally not set this.
+
+For example, a modern Go project might have:
+
+myapp/
+├── Dockerfile
+├── go.mod
+├── go.sum
+└── main.go
+
+and would build using Go modules.
+
+4. Copy the application source code
+COPY . .
+
+This copies files from your local build context into the Docker image.
+
+For example, suppose your directory is:
+
+myapp/
+├── Dockerfile
+├── main.go
+└── handler.go
+
+Then:
+
+COPY . .
+
+essentially puts those files inside the build container.
+
+The first . means:
+
+current directory on your machine
+
+The second . means:
+
+current working directory inside the image
+
+5. Compile the Go application
+RUN CGO_ENABLED=0 go build -o /app .
+
+This is the most important part of the build stage.
+
+go build
+Compiles the Go source code into an executable binary.
+
+-o /app
+Specifies the output filename.
+
+Instead of producing the default executable name, Go creates:
+
+/app
+
+So after this command, the build stage contains something like:
+
+/app       <-- compiled Go executable
+
+CGO_ENABLED=0
+This disables CGO.
+
+CGO allows Go programs to interact with C code/libraries.
+
+Setting:
+
+CGO_ENABLED=0
+
+usually helps produce a statically linked Go binary, which is particularly useful when the final image is scratch.
+
+Now the second stage begins
+FROM scratch
+
+This is where the multi-stage build becomes useful.
+
+scratch is a special Docker base image containing essentially nothing.
+
+It doesn't contain:
+
+Ubuntu
+
+Bash
+
+apt
+
+Go
+
+standard Linux utilities
+
+package manager
+
+shell
+
+It's basically an empty starting point.
+
+Why would we want that?
+
+Because we don't need Go or Ubuntu to run our already-compiled Go application.
+
+We only need the executable.
+
+6. Copy the compiled binary
+COPY --from=build /app /app
+
+This is the key feature of multi-stage builds.
+
+Remember that we named the first stage:
+
+FROM ubuntu AS build
+
+So:
+
+--from=build
+
+means:
+
+"Copy something from the stage named build."
+
+Specifically:
+
+COPY --from=build /app /app
+
+means:
+
+Take:
+/app
+
+from:
+build stage
+
+and copy it to:
+/app
+
+in the final image.
+
+So the final image looks approximately like:
+
+Final scratch image
+│
+└── /app
+    └── compiled Go executable
+
+Notice what doesn't get copied:
+
+Ubuntu ❌
+Go compiler ❌
+apt packages ❌
+Go source code ❌
+Docker build tools ❌
+
+Only the compiled binary is copied.
+
+7. Set the application as the entrypoint
+ENTRYPOINT ["/app"]
+
+This tells Docker:
+
+Whenever this container starts, execute /app.
+
+For example:
+
+docker run my-go-app
+
+Docker effectively starts:
+
+/app
+
+Since /app is the compiled Go executable, your Go application starts.
+
+Complete flow
+The whole Dockerfile can be visualized like this:
+
+                 BUILD STAGE
+        ┌───────────────────────────┐
+        │        Ubuntu             │
+        │                           │
+        │  Install Go               │
+        │       ↓                   │
+        │  Copy source code         │
+        │       ↓                   │
+        │  go build                 │
+        │       ↓                   │
+        │  /app                     │
+        │  (compiled binary)        │
+        └─────────────┬─────────────┘
+                      │
+                      │ COPY --from=build
+                      ↓
+                 FINAL STAGE
+        ┌───────────────────────────┐
+        │        scratch            │
+        │                           │
+        │        /app               │
+        │    Go executable          │
+        └───────────────────────────┘
+                      │
+                      ↓
+             ENTRYPOINT ["/app"]
+                      │
+                      ↓
+                Application
+
+Why use multi-stage builds?
+Without multi-stage builds, you might have:
+
+FROM ubuntu
+
+RUN apt-get update && apt-get install -y golang-go
+
+COPY . .
+
+RUN go build -o /app .
+
+CMD ["/app"]
+
+The resulting image contains Ubuntu + Go + build dependencies + source code + binary.
+
+That's unnecessary for running the application.
+
+With the multi-stage version:
+
+Build image:
+Ubuntu
++ Go
++ source code
++ compiler
+        ↓
+     compile
+        ↓
+     /app
+        ↓
+Final image:
+scratch
++ /app
+
+Therefore, the final image can be much smaller, which generally means less storage and faster image transfer/startup.
+
+One important caveat
+Because the final image is:
+
+FROM scratch
+
+there is no shell inside the container.
+
+So this won't work:
+
+docker exec -it container bash
+
+because bash doesn't exist.
+
+Also, a scratch image works well when the Go binary is truly self-contained. CGO_ENABLED=0 helps with that, but applications may still need additional runtime files such as CA certificates for HTTPS/TLS or timezone data, depending on what the application does.
+
+In one sentence
+This Dockerfile uses Ubuntu and Go only to compile the application, throws away the entire build environment, puts the resulting Go binary into an empty scratch image, and runs that binary when the container starts.
