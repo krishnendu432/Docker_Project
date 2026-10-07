@@ -1,0 +1,13 @@
+# Here we will understand the difference between bridge network, custom bridge network and host network.
+# created a bridge network name "bridge_network" and inside the bridge_network two containers "login" and "registration" there. 
+# Both are under inside the same network segment so each other can ping.
+# Process of it:-
+Syntax:- docker network create bridge_network # create a network name 'bridge_network'
+Syntax:- docker run -d --name login --network bridge_network nginx:latest # create a container 'login' and run it and run it under the network 'bridge_network'.
+Syntax:- docker inspect login # from that check the IP of the 'login' container.
+Syntax:- docker exec -it login bash # go inside the container 'login'
+Syntax:- sudo apt install iputils-ping #Install ping iputils package.
+
+# Same you have to follow for the "registration" container.
+# Now start ping from login to registration container or vice varsa. It will start ping. Because both are under a same bridge network. 
+ 
