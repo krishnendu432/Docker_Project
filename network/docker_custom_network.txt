@@ -9,5 +9,16 @@ Syntax:- docker exec -it login bash # go inside the container 'login'
 Syntax:- sudo apt install iputils-ping #Install ping iputils package.
 
 # Same you have to follow for the "registration" container.
-# Now start ping from login to registration container or vice varsa. It will start ping. Because both are under a same bridge network. 
- 
+# Now start ping from login to registration container or vice varsa. It will start ping. Because both are under a same bridge network.
+
+# Now we will create a 'custom bridge network' name 'secure-network' where the 'payment' container has been configured. The 'custom bridge network' has been create to
+# isolate the container from the other container. Because the payment container is very secure so we don't want that the other container can access the 
+# secure container.
+
+# Process of it :-
+syntax:- docker network create secure-network  
+syntax:- docker run -d --name payment --network secure-network nginx-latest
+Syntax:- docker inspect payment # from that check the IP of the 'payment' container. It is a different IP segment from 'login' and 'registration' containers.
+
+# Process of docker host network
+docker run -d --name host-network-demo --network host nginx:latest 
